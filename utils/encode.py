@@ -3,7 +3,8 @@ import pickle
 
 from urllib.parse import quote_plus
 
-url = 'http://127.0.0.1:8000/map?points='
+url = 'http://144.91.91.85:8000/map?points='
+# url = 'http://127.0.0.1:8000/map?points='
 
 points = [
     {
