@@ -1,0 +1,9 @@
+version: '3.1'
+
+services:
+
+  api:
+    restart: on-failure
+    build: api/
+    environment:
+      TEMPLATE_FILE: template.html
