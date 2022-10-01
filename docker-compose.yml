@@ -1,10 +1,10 @@
-version: '3.1'
+version: "3.1"
 
 services:
 
-  api:
-    restart: on-failure
+  map:
     build: .
+    restart: on-failure
     ports:
       - "80:80"
     environment:

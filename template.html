@@ -31,103 +31,103 @@
  and consistent behavior across browsers, consider loading using Promises
  with https://www.npmjs.com/package/@googlemaps/js-api-loader.
 -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyABHl7o7-BJWqTb-HVT-7MXsJ26s8ejGKg&callback=initMap&v=weekly"
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8JUXiyzwAd3L6uyQUC4Bgkdppp9pydOI&callback=initMap&v=weekly"
         defer>
 </script>
 <script>
-    // from https://stackoverflow.com/a/9535336
-    function generateCircle(point, radius, inner_radius) {
-        const D2R = Math.PI / 180;  // degrees to radians
-        const R2D = 180 / Math.PI;  // radians to degrees
-        const EARTH_RADIUS = 6371 * 1000;  // 6371 is the radius of the earth in km
-        const POINTS = 32;
+  // from https://stackoverflow.com/a/9535336
+  function generateCircle(point, radius, inner_radius) {
+    const D2R = Math.PI / 180;  // degrees to radians
+    const R2D = 180 / Math.PI;  // radians to degrees
+    const EARTH_RADIUS = 6371 * 1000;  // 6371 is the radius of the earth in km
+    const POINTS = 32;
 
-        // find the radius in lat/lon
-        const rlat = (radius / EARTH_RADIUS) * R2D;
-        const rlng = rlat / Math.cos(point.lat() * D2R);
+    // find the radius in lat/lon
+    const rlat = (radius / EARTH_RADIUS) * R2D;
+    const rlng = rlat / Math.cos(point.lat() * D2R);
 
-        const extp = [];
-        let start, end;
-        if (inner_radius === 1) {
-            start = 0;
-            end = POINTS + 1;
-        } else {  // one extra here makes sure we connect the
-            start = POINTS + 1;
-            end = 0;
+    const extp = [];
+    let start, end;
+    if (inner_radius === 1) {
+      start = 0;
+      end = POINTS + 1;
+    } else {  // one extra here makes sure we connect the
+      start = POINTS + 1;
+      end = 0;
+    }
+
+    for (let i = start; (inner_radius === 1 ? i < end : i > end); i = i + inner_radius) {
+      const theta = Math.PI * (i / (POINTS / 2));
+      let lat = point.lat() + (rlat * Math.sin(theta));  // center a + radius x * cos(theta)
+      let lng = point.lng() + (rlng * Math.cos(theta));  // center b + radius y * sin(theta)
+      extp.push(new google.maps.LatLng(lat, lng));
+      // bounds.extend(extp[extp.length - 1]);
+    }
+    return extp;
+  }
+
+  function drawCircle(map, coords, radius, color, opacity) {
+    new google.maps.Circle({
+      map: map,
+      center: coords,
+      radius: radius,
+      fillColor: color,
+      fillOpacity: opacity,
+    });
+  }
+
+  function drawDonut(map, coords, radius, inner_radius, color, opacity) {
+    new google.maps.Polygon({
+      map: map,
+      paths: [generateCircle(coords, radius, 1), generateCircle(coords, inner_radius, -1)],
+      fillColor: color,
+      fillOpacity: opacity,
+    });
+  }
+
+  function addMarker(map, point, bounds, info) {
+    let coords = point['coords'];
+    coords = new google.maps.LatLng(coords[0], coords[1]);
+    let marker = new google.maps.Marker({
+      position: coords,
+      map,
+    });
+    bounds.extend(marker.position);
+
+    let circle = point['circle'];
+    if (circle) {
+      let radius = circle['radius'];
+      let inner_radius = circle['inner_radius'];
+      let color = circle['color'] || '#FF0000';
+      let opacity = circle['opacity'] || 0.5;
+      if ('inner_radius' in circle) {
+        drawDonut(map, coords, radius, inner_radius, color, opacity);
+      } else {
+        drawCircle(map, coords, radius, color, opacity);
+      }
+    }
+    google.maps.event.addListener(marker, 'click', (
+      function (marker) {
+        return function () {
+          info.setContent(point['text']);
+          info.open(map, marker);
         }
+      }
+    )(marker));
+  }
 
-        for (let i = start; (inner_radius === 1 ? i < end : i > end); i = i + inner_radius) {
-            const theta = Math.PI * (i / (POINTS / 2));
-            let lat = point.lat() + (rlat * Math.sin(theta));  // center a + radius x * cos(theta)
-            let lng = point.lng() + (rlng * Math.cos(theta));  // center b + radius y * sin(theta)
-            extp.push(new google.maps.LatLng(lat, lng));
-            // bounds.extend(extp[extp.length - 1]);
-        }
-        return extp;
+  function initMap() {  // callback for script
+    const points = {undefined};  // fill like [[lat1, lng1, text1], [lat2, lng2, text2], ...]
+    const map = new google.maps.Map(document.getElementById("map"));
+    let bounds = new google.maps.LatLngBounds();
+    let info = new google.maps.InfoWindow();
+
+    for (let point of points) {
+      addMarker(map, point, bounds, info);
     }
 
-    function drawCircle(map, coords, radius, color, opacity) {
-        new google.maps.Circle({
-            map: map,
-            center: coords,
-            radius: radius,
-            fillColor: color,
-            fillOpacity: opacity,
-        });
-    }
-
-    function drawDonut(map, coords, radius, inner_radius, color, opacity) {
-        new google.maps.Polygon({
-            map: map,
-            paths: [generateCircle(coords, radius, 1), generateCircle(coords, inner_radius, -1)],
-            fillColor: color,
-            fillOpacity: opacity,
-        });
-    }
-
-    function addMarker(map, point, bounds, info) {
-        let coords = point['coords'];
-        coords = new google.maps.LatLng(coords[0], coords[1]);
-        let marker = new google.maps.Marker({
-            position: coords,
-            map,
-        });
-        bounds.extend(marker.position);
-
-        let circle = point['circle'];
-        if (circle) {
-            let radius = circle['radius'];
-            let inner_radius = circle['inner_radius'];
-            let color = circle['color'] || '#FF0000';
-            let opacity = circle['opacity'] || 0.5;
-            if ('inner_radius' in circle) {
-                drawDonut(map, coords, radius, inner_radius, color, opacity);
-            } else {
-                drawCircle(map, coords, radius, color, opacity);
-            }
-        }
-        google.maps.event.addListener(marker, 'click', (
-            function (marker) {
-                return function () {
-                    info.setContent(point['text']);
-                    info.open(map, marker);
-                }
-            }
-        )(marker));
-    }
-
-    function initMap() {  // callback for script
-        const points = {undefined};  // fill like [[lat1, lng1, text1], [lat2, lng2, text2], ...]
-        const map = new google.maps.Map(document.getElementById("map"));
-        let bounds = new google.maps.LatLngBounds();
-        let info = new google.maps.InfoWindow();
-
-        for (let point of points) {
-            addMarker(map, point, bounds, info);
-        }
-
-        map.fitBounds(bounds);
-    }
+    map.fitBounds(bounds);
+  }
 </script>
 </body>
 </html>
