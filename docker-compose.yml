@@ -9,3 +9,4 @@ services:
       - "80:80"
     environment:
       TEMPLATE_FILE: template.html
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}  # set key

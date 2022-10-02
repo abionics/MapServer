@@ -31,8 +31,7 @@
  and consistent behavior across browsers, consider loading using Promises
  with https://www.npmjs.com/package/@googlemaps/js-api-loader.
 -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8JUXiyzwAd3L6uyQUC4Bgkdppp9pydOI&callback=initMap&v=weekly"
-        defer>
+<script src="https://maps.googleapis.com/maps/api/js?key={GOOGLE_MAPS_API_KEY}&callback=initMap&v=weekly" defer>
 </script>
 <script>
   // from https://stackoverflow.com/a/9535336
@@ -117,7 +116,7 @@
   }
 
   function initMap() {  // callback for script
-    const points = {undefined};  // fill like [[lat1, lng1, text1], [lat2, lng2, text2], ...]
+    const points = {POINTS};  // fill like [[lat1, lng1, text1], [lat2, lng2, text2], ...]
     const map = new google.maps.Map(document.getElementById("map"));
     let bounds = new google.maps.LatLngBounds();
     let info = new google.maps.InfoWindow();
