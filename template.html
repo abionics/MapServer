@@ -35,7 +35,7 @@
 </script>
 <script>
   // from https://stackoverflow.com/a/9535336
-  function generateCircle(point, radius, inner_radius) {
+  function generateCircleFromLines(point, radius, inner_radius, bounds) {
     const D2R = Math.PI / 180;  // degrees to radians
     const R2D = 180 / Math.PI;  // radians to degrees
     const EARTH_RADIUS = 6371 * 1000;  // 6371 is the radius of the earth in km
@@ -60,25 +60,33 @@
       let lat = point.lat() + (rlat * Math.sin(theta));  // center a + radius x * cos(theta)
       let lng = point.lng() + (rlng * Math.cos(theta));  // center b + radius y * sin(theta)
       extp.push(new google.maps.LatLng(lat, lng));
-      // bounds.extend(extp[extp.length - 1]);
+      bounds.extend(extp[extp.length - 1]);
     }
     return extp;
   }
 
-  function drawCircle(map, coords, radius, color, opacity) {
-    new google.maps.Circle({
+  function drawCircle(map, coords, radius, color, opacity, bounds) {
+    let circle = new google.maps.Circle({
       map: map,
       center: coords,
       radius: radius,
       fillColor: color,
       fillOpacity: opacity,
     });
+    bounds.union(circle.getBounds());
   }
 
-  function drawDonut(map, coords, radius, inner_radius, color, opacity) {
+  function drawDonut(map, coords, radius, inner_radius, color, opacity, bounds) {
+    if (inner_radius === 0) {
+      drawCircle(map, coords, radius, opacity, bounds);
+      return;
+    }
     new google.maps.Polygon({
       map: map,
-      paths: [generateCircle(coords, radius, 1), generateCircle(coords, inner_radius, -1)],
+      paths: [
+        generateCircleFromLines(coords, radius, 1, bounds),
+        generateCircleFromLines(coords, inner_radius, -1, bounds),
+      ],
       fillColor: color,
       fillOpacity: opacity,
     });
@@ -100,9 +108,9 @@
       let color = circle['color'] || '#FF0000';
       let opacity = circle['opacity'] || 0.5;
       if ('inner_radius' in circle) {
-        drawDonut(map, coords, radius, inner_radius, color, opacity);
+        drawDonut(map, coords, radius, inner_radius, color, opacity, bounds);
       } else {
-        drawCircle(map, coords, radius, color, opacity);
+        drawCircle(map, coords, radius, color, opacity, bounds);
       }
     }
     google.maps.event.addListener(marker, 'click', (
